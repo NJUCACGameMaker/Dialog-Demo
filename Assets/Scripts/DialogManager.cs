@@ -13,6 +13,7 @@ public class DialogManager : MonoBehaviour
     private Dialog currentDialog;              // 当前对话
     private int id;                            // temp 测试用
     private DialogLoader loader;
+    private List<Dialog> currentDialogSection; // 当前加载的section
 
     private string tempDialog;                 // 逐字显示用
     private bool dialogFlag;                   // 判断是否在逐字显示
@@ -31,18 +32,22 @@ public class DialogManager : MonoBehaviour
         }
     }
 
-    public void initDialog()
+    public void initDialog(string section)
     {
-        loader = new DialogLoader();
-        loader.loadData();
+        currentDialogSection = new List<Dialog>();
+        foreach (Dialog d in loader.context)
+        {
+            if (d.section == section)
+                currentDialogSection.Add(d);
+        }
         DialogBox = Instantiate(DialogPrefab) as GameObject;
-        currentDialog = loader.context[0];
+        currentDialog = currentDialogSection[0];
         id = 0;
         dialogFlag = false;
         DialogBox.transform.Find("NamePanel").Find("NameText").GetComponent<Text>().text = "";
+        DialogBox.transform.Find("DialogPanel").Find("DialogText").GetComponent<Text>().text = "";
         animationLock = true;
-        StartCoroutine(nameAnimation("", currentDialog.characterName));
-        displayDialog(currentDialog);
+        StartCoroutine(initializeAnimation());
     }
 
     private void displayDialog(Dialog dialog)
@@ -58,8 +63,9 @@ public class DialogManager : MonoBehaviour
 
     public void DestoryDiaLog()
     {
-        if (DialogBox != null)
-            Destroy(DialogBox);
+        if (DialogBox != null) {
+            StartCoroutine(destroyAnimation());
+        }
     }
 
     public bool IsEmptyDialog()
@@ -78,7 +84,9 @@ public class DialogManager : MonoBehaviour
 
     void Start()
     {
-        initDialog();
+        loader = new DialogLoader();
+        loader.loadData();
+        initDialog("Scene1");
     }
 
     void Update()
@@ -100,6 +108,29 @@ public class DialogManager : MonoBehaviour
         }
     }
 
+    private IEnumerator initializeAnimation()
+    {
+        Vector3 targetNamePanelPosition = DialogBox.transform.Find("NamePanel").transform.position;
+        Vector3 targetDialogPanelPosition = DialogBox.transform.Find("DialogPanel").transform.position;
+        Color targetNamePanelColor = DialogBox.transform.Find("NamePanel").GetComponent<Image>().color;
+        Color targetDialogPanelColor = DialogBox.transform.Find("DialogPanel").GetComponent<Image>().color;
+        Vector3 targetCharacterPosition = DialogBox.transform.Find("Character").transform.position;
+        Color targetCharacterColor = DialogBox.transform.Find("Character").GetComponent<Image>().color;
+        for (float t = 0; t <= 1f; t += 0.05f)
+        {
+            DialogBox.transform.Find("NamePanel").transform.position = Vector3.Lerp(targetNamePanelPosition - new Vector3(0, 20f, 0), targetNamePanelPosition, EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("DialogPanel").transform.position = Vector3.Lerp(targetDialogPanelPosition - new Vector3(0, 20f, 0), targetDialogPanelPosition, EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("Character").transform.position = Vector3.Lerp(targetCharacterPosition - new Vector3(40f, 0, 0), targetCharacterPosition, EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("NamePanel").GetComponent<Image>().color = Color.Lerp(new Color(targetNamePanelColor.r, targetNamePanelColor.g, targetNamePanelColor.b, 0), targetNamePanelColor, EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("DialogPanel").GetComponent<Image>().color = Color.Lerp(new Color(targetDialogPanelColor.r, targetDialogPanelColor.g, targetDialogPanelColor.b, 0), targetDialogPanelColor, EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("Character").GetComponent<Image>().color = Color.Lerp(new Color(targetCharacterColor.r, targetCharacterColor.g, targetCharacterColor.b, 0), targetCharacterColor, EasingFuncs.QuartInOut(t));
+            yield return null;
+            yield return new WaitForSeconds(0.06f);
+        }
+        StartCoroutine(nameAnimation("", currentDialog.characterName));
+        displayDialog(currentDialog);
+    }
+
     private IEnumerator nameAnimation(string name1, string name2)
     {
         GameObject replacedName = Instantiate(DialogBox.transform.Find("NamePanel").Find("NameText").gameObject) as GameObject;
@@ -111,14 +142,16 @@ public class DialogManager : MonoBehaviour
         replacedName.GetComponent<Text>().color = c2;
         replacedName.transform.parent = DialogBox.transform.Find("NamePanel");
 
-        for (float t = 1f; t > 0; t -= 0.05f)
+        Vector3 targetNameTextPosition = DialogBox.transform.Find("NamePanel").Find("NameText").position + new Vector3(20f, 0, 0);
+        Vector3 targetReplacedNamePosition = DialogBox.transform.Find("NamePanel").Find("NameText").position;
+
+        for (float t = 0; t <= 1f; t += 0.05f)
         {
-            DialogBox.transform.Find("NamePanel").Find("NameText").transform.position += new Vector3(1f, 0, 0);
-            replacedName.transform.position += new Vector3(1f, 0, 0);
-            c1.a -= 0.05f;
-            c2.a += 0.05f;
-            DialogBox.transform.Find("NamePanel").Find("NameText").GetComponent<Text>().color = c1;
-            replacedName.GetComponent<Text>().color = c2;
+            DialogBox.transform.Find("NamePanel").Find("NameText").transform.position = Vector3.Lerp(targetNameTextPosition - new Vector3(20f, 0, 0), targetNameTextPosition, EasingFuncs.QuartInOut(t));
+            replacedName.transform.position = Vector3.Lerp(targetReplacedNamePosition - new Vector3(20f, 0, 0), targetReplacedNamePosition, EasingFuncs.QuartInOut(t));
+            
+            DialogBox.transform.Find("NamePanel").Find("NameText").GetComponent<Text>().color = Color.Lerp(c1, new Color(c1.r, c1.g, c1.b, 0f), EasingFuncs.QuartInOut(t));
+            replacedName.GetComponent<Text>().color = Color.Lerp(c2, new Color(c2.r, c2.g, c2.b, 1f), EasingFuncs.QuartInOut(t));
             yield return null;//下一帧继续执行for循环
             yield return new WaitForSeconds(0.006f);//0.006秒后继续执行for循环
         }
@@ -129,13 +162,50 @@ public class DialogManager : MonoBehaviour
         animationLock = false;
     }
 
+    private IEnumerator destroyAnimation()
+    {
+        Vector3 targetNamePanelPosition = DialogBox.transform.Find("NamePanel").transform.position;
+        Vector3 targetDialogPanelPosition = DialogBox.transform.Find("DialogPanel").transform.position;
+        Color targetNamePanelColor = DialogBox.transform.Find("NamePanel").GetComponent<Image>().color;
+        Color targetDialogPanelColor = DialogBox.transform.Find("DialogPanel").GetComponent<Image>().color;
+        Vector3 targetCharacterPosition = DialogBox.transform.Find("Character").transform.position;
+        Color targetCharacterColor = DialogBox.transform.Find("Character").GetComponent<Image>().color;
+        Vector3 targetNameTextPosition = DialogBox.transform.Find("NamePanel").Find("NameText").transform.position;
+        Color targetNameTextColor = DialogBox.transform.Find("NamePanel").Find("NameText").GetComponent<Text>().color;
+        Vector3 targetDialogTextPosition = DialogBox.transform.Find("DialogPanel").Find("DialogText").transform.position;
+        Color targetDialogTextColor = DialogBox.transform.Find("DialogPanel").Find("DialogText").GetComponent<Text>().color;
+
+        for (float t = 0; t <= 1f; t += 0.05f)
+        {
+            DialogBox.transform.Find("NamePanel").transform.position = Vector3.Lerp(targetNamePanelPosition, targetNamePanelPosition - new Vector3(0, 20f, 0), EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("DialogPanel").transform.position = Vector3.Lerp(targetDialogPanelPosition, targetDialogPanelPosition - new Vector3(0, 20f, 0), EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("Character").transform.position = Vector3.Lerp(targetCharacterPosition, targetCharacterPosition + new Vector3(40f, 0, 0), EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("NamePanel").Find("NameText").transform.position = Vector3.Lerp(targetNameTextPosition, targetNameTextPosition - new Vector3(0, 20f, 0), EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("DialogPanel").Find("DialogText").transform.position = Vector3.Lerp(targetDialogTextPosition, targetDialogTextPosition - new Vector3(0, 20f, 0), EasingFuncs.QuartInOut(t));
+
+            DialogBox.transform.Find("NamePanel").GetComponent<Image>().color = Color.Lerp(targetNamePanelColor, new Color(targetNamePanelColor.r, targetNamePanelColor.g, targetNamePanelColor.b, 0), EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("DialogPanel").GetComponent<Image>().color = Color.Lerp(targetDialogPanelColor, new Color(targetDialogPanelColor.r, targetDialogPanelColor.g, targetDialogPanelColor.b, 0), EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("Character").GetComponent<Image>().color = Color.Lerp(targetCharacterColor, new Color(targetCharacterColor.r, targetCharacterColor.g, targetCharacterColor.b, 0), EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("NamePanel").Find("NameText").GetComponent<Text>().color = Color.Lerp(targetNameTextColor, new Color(targetNameTextColor.r, targetNameTextColor.g, targetNameTextColor.b, 0), EasingFuncs.QuartInOut(t));
+            DialogBox.transform.Find("DialogPanel").Find("DialogText").GetComponent<Text>().color = Color.Lerp(targetDialogTextColor, new Color(targetDialogTextColor.r, targetDialogTextColor.g, targetDialogTextColor.b, 0), EasingFuncs.QuartInOut(t));
+
+            yield return null;
+            yield return new WaitForSeconds(0.06f);
+        }
+
+        Destroy(DialogBox);
+    }
+
     private void setNextDialog()
     {
         string name1 = currentDialog.characterName;
         id++;
         if (id >= loader.context.Count)
-            id = 0;
-        currentDialog = loader.context[id];
+        {
+            DestoryDiaLog();
+            return;
+        }
+        currentDialog = currentDialogSection[id];
         if (name1 != currentDialog.characterName)
         {
             animationLock = true;
@@ -146,7 +216,7 @@ public class DialogManager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!animationLock && Event.current != null && Event.current.type == EventType.MouseDown) {
+        if (!animationLock && DialogBox != null && Event.current != null && Event.current.type == EventType.MouseDown) {
             // 如果当前文字已经全部出现，则进入下一句
             // 否则将当前这句话直接显示出来
             if (tempDialog == currentDialog.text) {
