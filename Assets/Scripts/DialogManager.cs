@@ -125,7 +125,7 @@ public class DialogManager : MonoBehaviour
             DialogBox.transform.Find("DialogPanel").GetComponent<Image>().color = Color.Lerp(new Color(targetDialogPanelColor.r, targetDialogPanelColor.g, targetDialogPanelColor.b, 0), targetDialogPanelColor, EasingFuncs.QuartInOut(t));
             DialogBox.transform.Find("Character").GetComponent<Image>().color = Color.Lerp(new Color(targetCharacterColor.r, targetCharacterColor.g, targetCharacterColor.b, 0), targetCharacterColor, EasingFuncs.QuartInOut(t));
             yield return null;
-            yield return new WaitForSeconds(0.06f);
+            yield return new WaitForSeconds(0.03f);
         }
         StartCoroutine(nameAnimation("", currentDialog.characterName));
         displayDialog(currentDialog);
@@ -190,7 +190,7 @@ public class DialogManager : MonoBehaviour
             DialogBox.transform.Find("DialogPanel").Find("DialogText").GetComponent<Text>().color = Color.Lerp(targetDialogTextColor, new Color(targetDialogTextColor.r, targetDialogTextColor.g, targetDialogTextColor.b, 0), EasingFuncs.QuartInOut(t));
 
             yield return null;
-            yield return new WaitForSeconds(0.06f);
+            yield return new WaitForSeconds(0.03f);
         }
 
         Destroy(DialogBox);
