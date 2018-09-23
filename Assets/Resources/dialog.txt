@@ -1,3 +1,4 @@
-﻿1|Scene1|包包|This is a test message|testCG1|0
-2|Scene1|NA|This is another test message|testCG2|0
-3|Scene1|古|今天是2018年9月22日|testCG3|0
+﻿1|Scene1|蕾法|肯定能找到线索的。|testCG1|0
+2|Scene1|蕾法|一定要证明我父亲的清白！|testCG2|0
+3|Scene1|成步堂|蕾法大人很喜欢她的父亲吗？|testCG3|0
+4|Scene1|蕾法|刺猬头！|testCG3|0
