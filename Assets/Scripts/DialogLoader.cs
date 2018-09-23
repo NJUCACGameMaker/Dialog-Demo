@@ -19,7 +19,7 @@ public class DialogLoader : MonoBehaviour {
             {
                 if (rawData == "")
                     continue;
-                string[] data = rawData.Split('|');
+                string[] data = rawData.Replace("\\", "\n").Split('|');
                 Dialog dialog = new Dialog();
                 dialog.id = int.Parse(data[0]);
                 dialog.section = data[1];

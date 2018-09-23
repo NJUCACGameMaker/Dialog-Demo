@@ -4,7 +4,7 @@
 4|Scene1|蕾法|刺猬头！|testCG3|0
 
 5|Scene2|Saber|Excallibar!!!|testCG1|0
-6|Scene2|Archer|I am the bone of my sword.\n123|testCG2|0
+6|Scene2|Archer|I am the bone of my sword.\123|testCG2|0
 7|Scene2|Lancer|Gáe Bolg!|testCG3|0
 8|Scene2|Caster|大连有个阿瓦隆|testCG3|0
 9|Scene2|Berserker|*(!#$%(#@&^(@#$&%()!@*%)#^&|testCG3|0

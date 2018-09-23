@@ -144,7 +144,7 @@ public class DialogManager : MonoBehaviour
         Color c2 = replacedName.GetComponent<Text>().color;
         c2 = new Color(c2.r, c2.g, c2.b, 0f);
         replacedName.GetComponent<Text>().color = c2;
-        replacedName.transform.parent = DialogBox.transform.Find("NamePanel");
+        replacedName.transform.SetParent(DialogBox.transform.Find("NamePanel"));
 
         Vector3 targetNameTextPosition = DialogBox.transform.Find("NamePanel").Find("NameText").position + new Vector3(20f, 0, 0);
         Vector3 targetReplacedNamePosition = DialogBox.transform.Find("NamePanel").Find("NameText").position;
