@@ -17,6 +17,8 @@ public class DialogLoader : MonoBehaviour {
             string[] strs = File.ReadAllLines(dialogDataPath);
             foreach (string rawData in strs)
             {
+                if (rawData == "")
+                    continue;
                 string[] data = rawData.Split('|');
                 Dialog dialog = new Dialog();
                 dialog.id = int.Parse(data[0]);

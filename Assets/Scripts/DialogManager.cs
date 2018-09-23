@@ -40,6 +40,8 @@ public class DialogManager : MonoBehaviour
             if (d.section == section)
                 currentDialogSection.Add(d);
         }
+        if (currentDialogSection.Count == 0)
+            return;
         DialogBox = Instantiate(DialogPrefab) as GameObject;
         currentDialog = currentDialogSection[0];
         id = 0;
@@ -86,25 +88,27 @@ public class DialogManager : MonoBehaviour
     {
         loader = new DialogLoader();
         loader.loadData();
-        initDialog("Scene1");
+        //initDialog("Scene1");
     }
 
     void Update()
     {
-        if (tempDialog == currentDialog.text)
-        {
-            dialogFlag = false;
-        }
-        if (dialogFlag)
-        {
-            Text dialogText = DialogBox.transform.Find("DialogPanel").Find("DialogText").GetComponent<Text>();
-            if (timer > textSpeed)
+        if (DialogBox != null) { 
+            if (tempDialog == currentDialog.text)
             {
-                timer = 0;
-                tempDialog = currentDialog.text.Substring(0, tempDialog.Length + 1);
+                dialogFlag = false;
             }
-            dialogText.text = tempDialog;
-            timer += Time.deltaTime;
+            if (dialogFlag)
+            {
+                Text dialogText = DialogBox.transform.Find("DialogPanel").Find("DialogText").GetComponent<Text>();
+                if (timer > textSpeed)
+                {
+                    timer = 0;
+                    tempDialog = currentDialog.text.Substring(0, tempDialog.Length + 1);
+                }
+                dialogText.text = tempDialog;
+                timer += Time.deltaTime;
+            }
         }
     }
 
@@ -194,13 +198,14 @@ public class DialogManager : MonoBehaviour
         }
 
         Destroy(DialogBox);
+        DialogBox = null;
     }
 
     private void setNextDialog()
     {
         string name1 = currentDialog.characterName;
         id++;
-        if (id >= loader.context.Count)
+        if (id >= currentDialogSection.Count)
         {
             animationLock = true;
             DestoryDiaLog();
