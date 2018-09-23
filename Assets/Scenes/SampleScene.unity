@@ -673,6 +673,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DialogPrefab: {fileID: 1649189823253264, guid: 2ccbb91f1b8bc3d4592b3dd37f4f828b,
     type: 2}
+  BranchPrefab: {fileID: 1596098596606774, guid: b7c7e8cd625538e48b56580444537dec,
+    type: 2}
   DialogBox: {fileID: 0}
   textSpeed: 0.04
 --- !u!4 &1060975523

@@ -7,6 +7,7 @@ public class DialogManager : MonoBehaviour
 {
     private static DialogManager instance;
     public GameObject DialogPrefab;
+    public GameObject BranchPrefab;
     public GameObject DialogBox;               // 对话框+立绘整体
     public double textSpeed = 0.04;            // 文字显示速度
     
@@ -14,11 +15,13 @@ public class DialogManager : MonoBehaviour
     private int id;                            // temp 测试用
     private DialogLoader loader;
     private List<Dialog> currentDialogSection; // 当前加载的section
+    private List<GameObject> branchButtons;    // 用于加载分支选项的按钮
 
     private string tempDialog;                 // 逐字显示用
     private bool dialogFlag;                   // 判断是否在逐字显示
     private double timer;
     private bool animationLock;                // 在播放特定动画的时候锁死交互
+    private bool branchLock;                   // 在出现选项支的时候锁死交互
 
     public static DialogManager Instance
     {
@@ -46,21 +49,69 @@ public class DialogManager : MonoBehaviour
         currentDialog = currentDialogSection[0];
         id = 0;
         dialogFlag = false;
+        branchLock = false;
         DialogBox.transform.Find("NamePanel").Find("NameText").GetComponent<Text>().text = "";
         DialogBox.transform.Find("DialogPanel").Find("DialogText").GetComponent<Text>().text = "";
         animationLock = true;
         StartCoroutine(initializeAnimation());
     }
 
+    private void initBranches()
+    {
+        int width = Screen.width;
+        int height = Screen.height;
+        branchLock = true;
+        branchButtons = new List<GameObject>();
+        for (int i = 0; i < currentDialog.branchNum; i++) {
+            GameObject btn = Instantiate(BranchPrefab) as GameObject;
+            btn.transform.position = new Vector3(width/2, Mathf.Lerp(height * 0.8f, height * 0.4f, i*1.0f / (currentDialog.branchNum - 1)), 0);
+            Color c = btn.GetComponent<Image>().color;
+            btn.GetComponent<Image>().color = new Color(c.r, c.g, c.b, 0);
+            btn.GetComponent<Branch>().switch_section = currentDialog.branches[i].switch_section;
+            btn.GetComponent<Branch>().text = currentDialog.branches[i].text;
+
+            btn.transform.Find("Text").GetComponent<Text>().text = currentDialog.branches[i].text;
+            c = btn.transform.Find("Text").GetComponent<Text>().color;
+            btn.transform.Find("Text").GetComponent<Text>().color = new Color(c.r, c.g, c.b, 0);
+
+            btn.GetComponent<Button>().onClick.AddListener(BranchOnClick);
+            btn.transform.SetParent(DialogBox.transform);
+            branchButtons.Add(btn);
+        }
+        StartCoroutine(initializeBranchAnimation());
+    }
+
+    private void BranchOnClick()
+    {
+        currentDialogSection = new List<Dialog>();
+        foreach (Dialog d in loader.context)
+        {
+            GameObject buttonSelf = UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject;
+            if (d.section == buttonSelf.GetComponent<Branch>().switch_section)
+                currentDialogSection.Add(d);
+        }
+        id = -1;
+
+        StartCoroutine(destroyBranchAnimation());
+
+        setNextDialog();
+        branchLock = false;
+    }
+
     private void displayDialog(Dialog dialog)
     {
         Image characterImage = DialogBox.transform.Find("Character").GetComponent<Image>();
         Sprite sp = Resources.Load(dialog.imagePath, typeof(Sprite)) as Sprite;
-        Debug.Log(dialog.imagePath);
         characterImage.sprite = sp;
         tempDialog = "";
         timer = 0;
         dialogFlag = true;
+
+        if (currentDialog.branchNum > 0)
+        {
+            branchLock = true;
+            initBranches();
+        }
     }
 
     public void DestoryDiaLog()
@@ -68,20 +119,6 @@ public class DialogManager : MonoBehaviour
         if (DialogBox != null) {
             StartCoroutine(destroyAnimation());
         }
-    }
-
-    public bool IsEmptyDialog()
-    {
-        if (GameObject.Find("Dialogbox(Clone)"))
-        {
-
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-
     }
 
     void Start()
@@ -166,6 +203,32 @@ public class DialogManager : MonoBehaviour
         animationLock = false;
     }
 
+    private IEnumerator initializeBranchAnimation()
+    {
+        for (int i = 0; i < branchButtons.Count; i++)
+        {
+            GameObject currentButton = branchButtons[i];
+            StartCoroutine(initializeSingleBranchAnimation(currentButton));
+            yield return null;
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+
+    private IEnumerator initializeSingleBranchAnimation(GameObject currentButton)
+    {
+        Vector3 targetPos = currentButton.transform.position;
+        Color targetColor = currentButton.GetComponent<Image>().color;
+        Color targetTextColor = currentButton.transform.Find("Text").GetComponent<Text>().color;
+        for (float t=0; t<=1f; t += 0.05f)
+        {
+            currentButton.transform.position = Vector3.Lerp(targetPos - new Vector3(20f, 0, 0), targetPos, EasingFuncs.QuartInOut(t));
+            currentButton.GetComponent<Image>().color = Color.Lerp(targetColor, new Color(targetColor.r, targetColor.g, targetColor.b, 1), EasingFuncs.QuartInOut(t));
+            currentButton.transform.Find("Text").GetComponent<Text>().color = Color.Lerp(targetTextColor, new Color(targetTextColor.r, targetTextColor.g, targetTextColor.b, 1), EasingFuncs.QuartInOut(t));
+            yield return null;
+            yield return new WaitForSeconds(0.006f);
+        }
+    }
+
     private IEnumerator destroyAnimation()
     {
         Vector3 targetNamePanelPosition = DialogBox.transform.Find("NamePanel").transform.position;
@@ -201,6 +264,33 @@ public class DialogManager : MonoBehaviour
         DialogBox = null;
     }
 
+    private IEnumerator destroyBranchAnimation()
+    {
+        for (int i = 0; i < branchButtons.Count; i++)
+        {
+            GameObject currentButton = branchButtons[i];
+            StartCoroutine(destroySingleBranchAnimation(currentButton));
+            yield return null;
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+
+    private IEnumerator destroySingleBranchAnimation(GameObject currentButton)
+    {
+        Vector3 targetPos = currentButton.transform.position;
+        Color targetColor = currentButton.GetComponent<Image>().color;
+        Color targetTextColor = currentButton.transform.Find("Text").GetComponent<Text>().color;
+        for (float t = 0; t <= 1f; t += 0.05f)
+        {
+            currentButton.transform.position = Vector3.Lerp(targetPos, targetPos + new Vector3(20f, 0, 0), EasingFuncs.QuartInOut(t));
+            currentButton.GetComponent<Image>().color = Color.Lerp(targetColor, new Color(targetColor.r, targetColor.g, targetColor.b, 0), EasingFuncs.QuartInOut(t));
+            currentButton.transform.Find("Text").GetComponent<Text>().color = Color.Lerp(targetTextColor, new Color(targetTextColor.r, targetTextColor.g, targetTextColor.b, 0), EasingFuncs.QuartInOut(t));
+            yield return null;
+            yield return new WaitForSeconds(0.006f);
+        }
+        Destroy(currentButton);
+    }
+
     private void setNextDialog()
     {
         string name1 = currentDialog.characterName;
@@ -222,7 +312,7 @@ public class DialogManager : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!animationLock && DialogBox != null && Event.current != null && Event.current.type == EventType.MouseDown) {
+        if (!branchLock && !animationLock && DialogBox != null && Event.current != null && Event.current.type == EventType.MouseDown) {
             // 如果当前文字已经全部出现，则进入下一句
             // 否则将当前这句话直接显示出来
             if (tempDialog == currentDialog.text) {
