@@ -202,6 +202,7 @@ public class DialogManager : MonoBehaviour
         id++;
         if (id >= loader.context.Count)
         {
+            animationLock = true;
             DestoryDiaLog();
             return;
         }
