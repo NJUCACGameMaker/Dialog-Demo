@@ -39,7 +39,9 @@ public class DialogManager : MonoBehaviour
         currentDialog = loader.context[0];
         id = 0;
         dialogFlag = false;
-        animationLock = false;
+        DialogBox.transform.Find("NamePanel").Find("NameText").GetComponent<Text>().text = "";
+        animationLock = true;
+        StartCoroutine(nameAnimation("", currentDialog.characterName));
         displayDialog(currentDialog);
     }
 
